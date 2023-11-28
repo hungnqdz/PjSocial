@@ -1,11 +1,13 @@
 package com.project.socialNetwork.config;
 
+import com.project.socialNetwork.repository.TokenRepository;
 import com.project.socialNetwork.service.jwt.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +24,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final TokenRepository tokenRepository;
 
     @Override
     protected void doFilterInternal
@@ -37,12 +40,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid token");
-            filterChain.doFilter(request,response);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
         jwt = authHeader.substring(7);
-        email = jwtService.extractUserName(jwt);
+        try {
+            email = jwtService.extractUserName(jwt);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+        boolean isTokenValid = tokenRepository.findByToken(jwt)
+                .map(t -> !t.isExpired() && !t.isRevoked())
+                .orElse(false);
+        if (!isTokenValid) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
             if (jwtService.isTokenValid(jwt, userDetails)) {
