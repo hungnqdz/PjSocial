@@ -1,0 +1,26 @@
+---
+- name: Depoly with Docker compose
+  hosts: spring
+  become: true
+  become_user: centos
+
+  tasks:
+    - name: Copy docker compose file fro source code
+      copy:
+        src: docker-compose.yml
+        dest: /home/centos/springboot/docker-compose.yml
+    - name: Ensure docker compose is installed
+      command: 'docker-compose --version'
+      ignore_errors: true
+    - name: Stop and remove container
+      command: docker compose down
+      args:
+        chdir: /home/centos/springboot/
+    - name: Pull latest image
+      command: docker composr pull
+      args:
+        chdir: /home/centos/springboot/
+    - name: Deploy new version
+      command: docker compose up -d
+      args:
+        chdir: /home/centos/springboot/
