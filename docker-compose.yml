@@ -14,7 +14,7 @@ services:
     ports:
       - 3307:3306
   spring-app:
-    image: phdg/pjsocial:latest
+    image: phdg1410/pjsocial:latest
     container_name: spring-container
     depends_on:
       - mysql
