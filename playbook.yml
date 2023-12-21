@@ -17,7 +17,7 @@
       args:
         chdir: /home/centos/springboot/
     - name: Pull latest image
-      command: docker composr pull
+      command: docker compose pull
       args:
         chdir: /home/centos/springboot/
     - name: Deploy new version
