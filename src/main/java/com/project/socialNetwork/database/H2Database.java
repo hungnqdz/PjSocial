@@ -27,7 +27,6 @@ public class H2Database {
         return new CommandLineRunner() {
             @Override
             public void run(String... args) throws Exception {
-                authenticationService.register(new RegisterRequest("email1@gmail.com","12345","Hung"));
                 log.info(accountRepository.findAll().toString());
             }
         };
