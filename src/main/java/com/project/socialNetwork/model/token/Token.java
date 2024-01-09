@@ -23,13 +23,8 @@ public class Token {
     @Enumerated(EnumType.STRING)
     private TokenType tokenType = TokenType.BEARER;
 
-    @Column(name = "revoked")
-    private boolean revoked;
 
-    @Column(name = "expired")
-    private boolean expired;
-
-    @ManyToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "account_id",referencedColumnName = "account_id")
     private Account account;
 

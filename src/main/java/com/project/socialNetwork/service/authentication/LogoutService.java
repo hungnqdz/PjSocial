@@ -1,5 +1,6 @@
 package com.project.socialNetwork.service.authentication;
 
+import com.project.socialNetwork.model.response.BaseResponse;
 import com.project.socialNetwork.repository.TokenRepository;
 import com.project.socialNetwork.service.jwt.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,16 +23,16 @@ public class LogoutService implements LogoutHandler {
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            BaseResponse.sendUnauthorized(response, "Unauthorized");
             return;
         }
         String token = header.substring(7);
         var storeToken = tokenRepository.findByToken(token).orElse(null);
-        if (storeToken != null) {
-            storeToken.setExpired(true);
-            storeToken.setRevoked(true);
-            tokenRepository.save(storeToken);
-            SecurityContextHolder.clearContext();
+        if (storeToken == null) BaseResponse.sendUnauthorized(response, "Unauthorized");
+        else {
+            tokenRepository.delete(storeToken);
         }
+        SecurityContextHolder.clearContext();
+        BaseResponse.sendOk(response, "Logout successfully");
     }
 }
