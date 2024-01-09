@@ -13,6 +13,7 @@ import com.project.socialNetwork.repository.AccountRepository;
 import com.project.socialNetwork.repository.TokenRepository;
 import com.project.socialNetwork.service.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -42,30 +43,37 @@ public class AuthenticationServiceImp implements AuthenticationService {
                     .role(Role.USER)
                     .build();
             String jwtToken = jwtService.generateToken(account);
-            saveToken(account,jwtToken);
+            account = accountRepository.save(account);
+            Token token = Token.builder()
+                    .token(jwtToken)
+                    .account(account)
+                    .tokenType(TokenType.BEARER)
+                    .build();
+            tokenRepository.save(token);
             return ResponseEntity.ok().body(BaseResponse.builder()
                     .statusCode(200)
                     .message("Registration successfully")
-                    .data(TokenDTO.from(tokenRepository.findByToken(jwtToken).orElseThrow()))
+                    .data(TokenDTO.from(token))
                     .build());
-        } catch (Exception e) {
+        } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest().body(
                     BaseResponse.builder()
                             .statusCode(400)
-                            .message("Registration failed")
+                            .message("Email already in use")
                             .build()
             );
         }
+        catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(
+                    BaseResponse.builder()
+                            .statusCode(500)
+                            .message("Registration failed")
+                            .build());
+        }
     }
 
-    private void revokeAllTokenByAccount(Account account){
-        List<Token> tokenList = tokenRepository.findAllValidTokenByUser(account.getId());
-        if (tokenList.isEmpty()) return;
-        tokenList.forEach(token -> {
-            token.setExpired(true);
-            token.setRevoked(true);
-        });
-    }
+
 
     @Override
     public ResponseEntity<BaseResponse> login(LoginRequest request) {
@@ -77,33 +85,39 @@ public class AuthenticationServiceImp implements AuthenticationService {
                     )
             );
             Account account = accountRepository.findByEmail(request.getEmail()).orElseThrow();
-            revokeAllTokenByAccount(account);
             String jwtToken = jwtService.generateToken(account);
-            saveToken(account,jwtToken);
+            Token token = Token.builder()
+                    .token(jwtToken)
+                    .account(account)
+                    .tokenType(TokenType.BEARER)
+                    .build();
+            var oldToken = tokenRepository.findTokenByUser(account.getId()).orElse(null);
+            if (oldToken != null){
+                tokenRepository.delete(oldToken);
+            }
+            tokenRepository.save(token);
             return ResponseEntity.ok(BaseResponse.builder()
                     .statusCode(200)
                     .message("login successfully")
-                    .data(TokenDTO.from(tokenRepository.findByToken(jwtToken).orElseThrow()))
+                    .data(TokenDTO.from(token))
                     .build());
         } catch (AuthenticationException e) {
             return ResponseEntity.badRequest().body(
                     BaseResponse.builder()
                             .statusCode(400)
                             .message("Invalid email or password")
-                            .data("")
                             .build()
             );
         }
+        catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(
+                    BaseResponse.builder()
+                            .statusCode(500)
+                            .message("Login failed")
+                            .build());
+        }
     }
-    private void saveToken(Account account,String jwtToken){
-        Token token = Token.builder()
-                .account(account)
-                .tokenType(TokenType.BEARER)
-                .expired(false)
-                .revoked(false)
-                .token(jwtToken)
-                .build();
-        tokenRepository.save(token);
-    }
+
 
 }

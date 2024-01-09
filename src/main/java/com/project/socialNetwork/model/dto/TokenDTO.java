@@ -24,8 +24,6 @@ public class TokenDTO {
                 .tokenType(token.getTokenType())
                 .accessToken(token.getToken())
                 .user(token.getAccount().getUser())
-                .expired(token.isExpired())
-                .revoke(token.isRevoked())
                 .build();
     }
 }

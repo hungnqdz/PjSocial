@@ -27,7 +27,6 @@ public class UserServiceImp implements UserService {
                     BaseResponse.builder()
                             .statusCode(400)
                             .message("Invalid password")
-                            .data("")
                             .build()
             );
         }
@@ -36,7 +35,6 @@ public class UserServiceImp implements UserService {
                     BaseResponse.builder()
                             .statusCode(400)
                             .message("New password must not similar to old password")
-                            .data("")
                             .build()
             );
         }
@@ -46,7 +44,6 @@ public class UserServiceImp implements UserService {
                 BaseResponse.builder()
                         .statusCode(200)
                         .message("Change password successfully")
-                        .data("")
                         .build()
         );
     }

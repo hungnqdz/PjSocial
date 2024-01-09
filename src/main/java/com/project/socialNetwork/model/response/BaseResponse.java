@@ -29,14 +29,14 @@ public class BaseResponse {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setHeader("Content-Type", "application/json");
         response.getOutputStream().write(BaseResponse.builder().statusCode(401)
-                .message(message).data("").build().toRestResponseBytes());
+                .message(message).build().toRestResponseBytes());
     }
 
     public static void sendOk(HttpServletResponse response,String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setHeader("Content-Type", "application/json");
         response.getOutputStream().write(BaseResponse.builder().statusCode(200)
-                .message(message).data("").build().toRestResponseBytes());
+                .message(message).build().toRestResponseBytes());
     }
 
 }
